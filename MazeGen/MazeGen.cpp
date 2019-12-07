@@ -4,7 +4,8 @@
 #include <iostream>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
-
+int counter = 0;
+int counter2 = 0;
 std::string getval(bool wall) {
 	if (wall)
 		return "[]";
@@ -13,9 +14,10 @@ std::string getval(bool wall) {
 }
 
 class maze {
-	bool is_wall[6][6];//[] row [] column
-	bool is_checked[6][6];
-	int len = 6;
+	bool is_wall[8][8];//[] row [] column
+	bool is_checked[8][8];
+	bool can_move[8][8];
+	int len = 8;
 public:
 	void start() {
 		for (int i = 0; i < len; i++) {
@@ -38,10 +40,29 @@ public:
 		is_wall[len - 2][len - 1] = false;
 	}
 
+	void set_can_move() {
+		for (int y = 0; y < len; y++) {
+			for (int x = 0; x < len; x++) {
+				can_move[x][y] = !is_wall[x][y];
+			}
+		}
+		can_move[1][0] = false;
+		can_move[len - 2][len - 1] = false;
+	}
+
 	void print() {
 		for (int i = 0; i < len; i++) {
 			for (int j = 0; j < len; j++) {
 				std::cout << getval(is_wall[i][j]);
+			}
+			std::cout << "\n";
+		}
+	}
+
+	void print2() {
+		for (int i = 0; i < len; i++) {
+			for (int j = 0; j < len; j++) {
+				std::cout << getval(!can_move[i][j]);
 			}
 			std::cout << "\n";
 		}
@@ -71,11 +92,65 @@ public:
 		return false;
 	}
 
+	bool is_in_bounds(int x, int y) {
+		return true;// x < len&& x > 0 && y < len && y > 0;
+	}
+
+	void flood_fill(int x, int y) {
+		//std::cout << x << y << std::endl;
+		//print2();
+		//x = 1;
+		//y = 1;
+		counter2++;
+		bool tmp = can_move[x][y];
+		can_move[x][y] = false;
+		if (tmp) {
+			std::cout << "j " << tmp << std::endl;
+			//if (can_move[x + 1][y] && is_in_bounds(x + 1, y)) {
+				//std::cout << x + 1 <<" " << y << std::endl;
+
+				flood_fill(x + 1, y);
+			//}
+			//if (can_move[x - 1][y] && is_in_bounds(x - 1, y)) {
+				flood_fill(x - 1, y);
+			//}
+			//if (can_move[x][y - 1] && is_in_bounds(x, y - 1)) {
+				flood_fill(x, y - 1);
+			///}
+			//if (can_move[x][y + 1] && is_in_bounds(x, y + 1)) {
+				flood_fill(x, y + 1);
+			//}
+		}
+	}
+
+	bool is_filled() {
+		counter = 0;
+		bool flag = true;
+		for (int i = 0; i < len; i++) {
+			for (int j = 0; j < len; j++) {
+				//std::cout << is_checked[i][j] << std::endl;
+				if (can_move[i][j]) {
+					counter++;
+					flag = false;
+					//return false;
+				}
+			}
+		}
+		std::cout << flag << std::endl;
+		print2();
+		return flag;
+	}
+
 	bool can_go_everywhere(int r1, int r2) {
-		return true;
+		can_move[r1][r2] = false;
+		flood_fill(1, 1);
+		std::cout << "bip " << counter2 << std::endl;
+		counter2 = 0;
+		return is_filled();
 	}
 
 	void generate() {
+		set_can_move();
 		while (shouldIcheck()) {
 			//std::cout << "testing" << std::endl;
 			int r1 = rand() % (len - 1), r2 = rand() % (len - 1);
@@ -87,7 +162,10 @@ public:
 				is_wall[r1][r2] = true;
 			else
 				is_wall[r1][r2] = false;
+			std::cout << counter << std::endl;
 			is_checked[r1][r2] = true;
+			set_can_move();
+			//can_move[r1][r2] = false;
 		}
 	}
 };
